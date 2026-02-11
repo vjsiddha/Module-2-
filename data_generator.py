@@ -1,17 +1,25 @@
 """
-Healthcare ER Patient Flow - Data Generator
-Generates mock historical data based on actual gameplay patterns
+Healthcare ER Patient Flow - Enhanced Data Generator
+Generates data using Poisson distribution (theoretically correct for count data)
+Includes patient discharge/treatment simulation
+Exports historical data for dashboard use
 """
 
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 
 class ERDataGenerator:
-    """Generate realistic ER patient arrival data based on gameplay patterns"""
+    """
+    Generate realistic ER patient arrival data using Poisson distribution
+    
+    Poisson is theoretically correct for:
+    - Discrete count data (# of patients)
+    - Independent arrivals
+    - Constant average rate per period
+    """
     
     def __init__(self):
-        # Actual gameplay data (23 rounds)
+        # Actual gameplay data (23 rounds) - serves as validation
         self.actual_data = {
             'emergency_walkin': [2,4,3,8,4,5,5,7,5,4,4,5,6,4,6,2,2,1,7,1,7,4,2],
             'emergency_ambulance': [0,1,1,2,0,2,0,0,1,2,1,3,2,2,2,3,1,1,0,1,0,2,1],
@@ -20,67 +28,102 @@ class ERDataGenerator:
             'step_down': [1,2,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1]
         }
         
-        # Calculate statistics from actual data
-        self.stats = self._calculate_stats()
+        # Fit Poisson models to actual data
+        self.poisson_params = self._fit_poisson_models()
+        
+        # Patient discharge/treatment parameters
+        self.discharge_rates = {
+            'emergency_walkin': 0.6,      # 60% discharged per round
+            'emergency_ambulance': 0.5,   # 50% discharged per round
+            'surgery': 0.3,               # 30% transferred to step-down
+            'critical_care': 0.4,         # 40% transferred to step-down
+            'step_down': 0.7              # 70% discharged home
+        }
     
-    def _calculate_stats(self):
-        """Calculate statistical properties of actual gameplay data"""
-        stats = {}
-        for dept, values in self.actual_data.items():
-            stats[dept] = {
-                'mean': np.mean(values),
-                'std': np.std(values),
-                'min': min(values),
-                'max': max(values),
-                'early_mean': np.mean(values[:8]),  # First 8 rounds
-                'mid_mean': np.mean(values[8:16]),   # Middle 8 rounds
-                'late_mean': np.mean(values[16:])    # Last 7 rounds
-            }
-        return stats
-    
-    def generate_round_arrivals(self, dept, round_num, variation_factor=0.2):
+    def _fit_poisson_models(self):
         """
-        Generate arrivals for a specific department and round
+        Fit Poisson distribution parameters (lambda) to actual data
+        Separate parameters for early/mid/late game phases
+        """
+        params = {}
+        
+        for dept, values in self.actual_data.items():
+            # Split into phases
+            early_data = values[:8]    # Rounds 1-8
+            mid_data = values[8:16]    # Rounds 9-16
+            late_data = values[16:]    # Rounds 17-23
+            
+            params[dept] = {
+                'early_lambda': np.mean(early_data),
+                'mid_lambda': np.mean(mid_data),
+                'late_lambda': np.mean(late_data),
+                'overall_lambda': np.mean(values)
+            }
+        
+        return params
+    
+    def _get_lambda_for_round(self, dept, round_num):
+        """Get appropriate lambda parameter for department and round"""
+        params = self.poisson_params[dept]
+        
+        if round_num <= 8:
+            return params['early_lambda']
+        elif round_num <= 16:
+            return params['mid_lambda']
+        else:
+            return params['late_lambda']
+    
+    def generate_round_arrivals(self, dept, round_num):
+        """
+        Generate arrivals using Poisson distribution
         
         Args:
             dept: Department name
-            round_num: Round number (0-22)
-            variation_factor: How much to vary from base patterns (0-1)
+            round_num: Round number (1-23)
+        
+        Returns:
+            Number of arriving patients (Poisson-distributed)
         """
-        stat = self.stats[dept]
+        lambda_param = self._get_lambda_for_round(dept, round_num)
         
-        # Determine base rate based on round position
-        if round_num < 8:
-            base_mean = stat['early_mean']
-        elif round_num < 16:
-            base_mean = stat['mid_mean']
-        else:
-            base_mean = stat['late_mean']
+        # Generate from Poisson distribution
+        arrivals = np.random.poisson(lambda_param)
         
-        # Add variation
-        std_dev = stat['std'] * (1 + variation_factor)
-        
-        # Generate value (ensure non-negative integer)
-        value = max(0, int(np.random.normal(base_mean, std_dev)))
-        
-        # Apply department-specific constraints
-        if dept in ['surgery', 'critical_care']:
-            # These departments rare after round 8
-            if round_num > 8:
-                value = np.random.poisson(0.1)  # Very rare
-        
-        if dept == 'step_down':
-            # Front-loaded with occasional late arrivals
-            if round_num > 10 and round_num < 18:
-                value = 0 if np.random.random() > 0.1 else value
-        
-        return min(value, stat['max'] + 2)  # Cap at reasonable max
+        return arrivals
     
-    def generate_session(self, num_rounds=23, session_id=1, variation=0.2):
-        """Generate a complete gameplay session"""
+    def simulate_patient_discharge(self, current_patients, dept):
+        """
+        Simulate patients being treated/discharged
+        
+        Args:
+            current_patients: Current number of patients in department
+            dept: Department name
+        
+        Returns:
+            Number of patients remaining after treatment/discharge
+        """
+        if current_patients == 0:
+            return 0
+        
+        discharge_rate = self.discharge_rates.get(dept, 0.5)
+        
+        # Binomial distribution: each patient has probability of being discharged
+        discharged = np.random.binomial(current_patients, discharge_rate)
+        
+        remaining = current_patients - discharged
+        
+        return remaining
+    
+    def generate_session(self, num_rounds=23, session_id=1):
+        """
+        Generate a complete gameplay session using Poisson distribution
+        
+        Returns:
+            DataFrame with round-by-round arrivals
+        """
         session_data = {
-            'round': list(range(1, num_rounds + 1)),
-            'session_id': [session_id] * num_rounds,
+            'round': [],
+            'session_id': [],
             'emergency_walkin': [],
             'emergency_ambulance': [],
             'surgery': [],
@@ -88,15 +131,24 @@ class ERDataGenerator:
             'step_down': []
         }
         
-        for round_num in range(num_rounds):
-            for dept in ['emergency_walkin', 'emergency_ambulance', 'surgery', 'critical_care', 'step_down']:
-                arrivals = self.generate_round_arrivals(dept, round_num, variation)
+        for round_num in range(1, num_rounds + 1):
+            session_data['round'].append(round_num)
+            session_data['session_id'].append(session_id)
+            
+            for dept in ['emergency_walkin', 'emergency_ambulance', 'surgery', 
+                        'critical_care', 'step_down']:
+                arrivals = self.generate_round_arrivals(dept, round_num)
                 session_data[dept].append(arrivals)
         
         return pd.DataFrame(session_data)
     
     def generate_multiple_sessions(self, num_sessions=5, num_rounds=23):
-        """Generate multiple gameplay sessions with varying patterns"""
+        """
+        Generate multiple gameplay sessions with Poisson variability
+        
+        Returns:
+            DataFrame with all sessions
+        """
         all_sessions = []
         
         # First session is actual data
@@ -105,58 +157,99 @@ class ERDataGenerator:
         actual_df.insert(1, 'session_id', 0)
         all_sessions.append(actual_df)
         
-        # Generate additional sessions with varying intensities
+        # Generate additional sessions using fitted Poisson models
         for session_id in range(1, num_sessions):
-            variation = 0.15 + (session_id * 0.05)  # Increasing variation
-            session_df = self.generate_session(num_rounds, session_id, variation)
+            session_df = self.generate_session(num_rounds, session_id)
             all_sessions.append(session_df)
         
-        return pd.concat(all_sessions, ignore_index=True)
+        combined_df = pd.concat(all_sessions, ignore_index=True)
+        
+        return combined_df
     
     def generate_real_time_data(self, current_round, historical_df):
         """
-        Generate real-time data for current round with some randomness
+        Generate real-time arrivals for current round
         
         Args:
             current_round: Current round number
-            historical_df: Historical data for reference
-        """
-        # Calculate averages from historical data for this round
-        round_data = historical_df[historical_df['round'] == current_round]
+            historical_df: Historical data (not used in Poisson approach)
         
+        Returns:
+            Dict of arrivals by department
+        """
         current_data = {}
-        for dept in ['emergency_walkin', 'emergency_ambulance', 'surgery', 'critical_care', 'step_down']:
-            if len(round_data) > 0:
-                mean_val = round_data[dept].mean()
-                std_val = round_data[dept].std() if round_data[dept].std() > 0 else 1
-                current_data[dept] = max(0, int(np.random.normal(mean_val, std_val)))
-            else:
-                # Fallback to overall stats
-                current_data[dept] = self.generate_round_arrivals(dept, current_round - 1)
+        
+        for dept in ['emergency_walkin', 'emergency_ambulance', 'surgery', 
+                    'critical_care', 'step_down']:
+            arrivals = self.generate_round_arrivals(dept, current_round)
+            current_data[dept] = arrivals
         
         return current_data
     
     def export_to_csv(self, df, filename='er_historical_data.csv'):
-        """Export generated data to CSV"""
+        """Export generated Poisson data to CSV"""
         df.to_csv(filename, index=False)
-        print(f"Data exported to {filename}")
+        print(f"✓ Poisson-based historical data exported to {filename}")
+        print(f"  - {len(df)} total records")
+        print(f"  - {len(df['session_id'].unique())} sessions")
+        print(f"  - Fitted using Poisson distribution (theoretically correct for count data)")
         return filename
+    
+    def get_poisson_parameters(self):
+        """Return fitted Poisson parameters for reporting"""
+        return self.poisson_params
 
 
 if __name__ == "__main__":
+    print("\n" + "="*70)
+    print("ER DATA GENERATOR - POISSON DISTRIBUTION")
+    print("="*70)
+    
     # Generate data
     generator = ERDataGenerator()
     
-    # Generate 5 sessions (1 actual + 4 mock)
+    # Show fitted parameters
+    print("\n📊 Fitted Poisson Parameters (λ):")
+    print("-" * 70)
+    for dept, params in generator.poisson_params.items():
+        print(f"\n{dept.replace('_', ' ').title()}:")
+        print(f"  Early Game (Rounds 1-8):   λ = {params['early_lambda']:.2f}")
+        print(f"  Mid Game (Rounds 9-16):    λ = {params['mid_lambda']:.2f}")
+        print(f"  Late Game (Rounds 17-23):  λ = {params['late_lambda']:.2f}")
+    
+    # Generate 5 sessions (1 actual + 4 Poisson-generated)
+    print("\n\n📦 Generating Historical Data...")
     historical_data = generator.generate_multiple_sessions(num_sessions=5)
     
-    print("Generated Historical Data:")
-    print(f"Total records: {len(historical_data)}")
-    print(f"Sessions: {historical_data['session_id'].unique()}")
-    print("\nSample data:")
-    print(historical_data.head(10))
-    print("\nStatistics by department:")
-    print(historical_data[['emergency_walkin', 'emergency_ambulance', 'surgery', 'critical_care', 'step_down']].describe())
+    print(f"\n✓ Generated {len(historical_data)} records")
+    print(f"✓ Sessions: {list(historical_data['session_id'].unique())}")
+    
+    print("\n📋 Sample Data (First 10 rows):")
+    print(historical_data.head(10).to_string(index=False))
+    
+    print("\n📊 Statistical Summary:")
+    print(historical_data[['emergency_walkin', 'emergency_ambulance', 'surgery', 
+                          'critical_care', 'step_down']].describe().round(2))
     
     # Export
-    generator.export_to_csv(historical_data, '/home/claude/er_historical_data.csv')
+    print("\n\n💾 Exporting Data...")
+    generator.export_to_csv(historical_data, 'er_historical_data.csv')
+    
+    # Test discharge simulation
+    print("\n\n🏥 Testing Patient Discharge Simulation:")
+    print("-" * 70)
+    test_patients = {'emergency_walkin': 10, 'surgery': 5, 'step_down': 8}
+    print("\nInitial Patients:")
+    for dept, count in test_patients.items():
+        print(f"  {dept}: {count} patients")
+    
+    print("\nAfter Treatment/Discharge:")
+    for dept, count in test_patients.items():
+        remaining = generator.simulate_patient_discharge(count, dept)
+        discharged = count - remaining
+        rate = generator.discharge_rates[dept]
+        print(f"  {dept}: {remaining} remain ({discharged} discharged, rate={rate:.0%})")
+    
+    print("\n" + "="*70)
+    print("✓ Data generation complete!")
+    print("="*70 + "\n")
