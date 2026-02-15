@@ -292,27 +292,15 @@ Proactive resource allocation needed immediately.
         return alerts
     
     def optimize_resource_allocation(self, forecasts, total_staff, total_beds,
-                                     service_rate=0.25):
+                                     service_rate=4.0):
         """
-        Optimize staff AND bed allocation with reasoning
-        
-        Uses queueing theory (M/M/c) to minimize expected wait time
-        
-        Args:
-            forecasts: Department forecasts
-            total_staff: Total staff available to allocate
-            total_beds: Total beds available to allocate
-            service_rate: Service rate per staff member (patients/hour)
-        
-        Returns:
-            Optimal allocation with detailed reasoning
+        Optimize staff AND bed allocation
+        service_rate = patients one staff member can handle per hour
+        Emergency: 1 nurse handles ~4 patients/hour
         """
-        # No external optimization module needed - using simple priority weighting
-        
-        # Calculate needed staff using M/M/c queue theory
         recommendations = {}
         
-        # Priority weighting (critical departments get priority)
+        # Priority weighting
         priority_weights = {
             'critical_care': 3.0,
             'emergency_ambulance': 2.5,
@@ -321,7 +309,15 @@ Proactive resource allocation needed immediately.
             'step_down': 1.0
         }
         
-        # Calculate weighted demand
+        # Service rates vary by department (patients per staff per hour)
+        dept_service_rates = {
+            'emergency_walkin': 4.0,
+            'emergency_ambulance': 3.0,
+            'surgery': 2.0,
+            'critical_care': 2.0,
+            'step_down': 5.0
+        }
+        
         weighted_demands = []
         for dept in self.departments:
             forecast_val = forecasts[dept]['forecast']
@@ -333,10 +329,7 @@ Proactive resource allocation needed immediately.
                 'weighted_demand': forecast_val * weight
             })
         
-        # Sort by weighted demand
         weighted_demands.sort(key=lambda x: x['weighted_demand'], reverse=True)
-        
-        # Allocate staff proportionally to weighted demand
         total_weighted = sum([x['weighted_demand'] for x in weighted_demands])
         
         remaining_staff = total_staff
@@ -345,92 +338,63 @@ Proactive resource allocation needed immediately.
         for i, demand_info in enumerate(weighted_demands):
             dept = demand_info['dept']
             forecast_val = demand_info['forecast']
+            mu = dept_service_rates.get(dept, 4.0)  # patients per staff per hour
             
             if i == len(weighted_demands) - 1:
-                # Last department gets remainder (ensure positive)
                 staff_allocated = max(1, remaining_staff)
                 beds_allocated = max(2, remaining_beds)
             else:
-                # Proportional allocation
                 proportion = demand_info['weighted_demand'] / total_weighted if total_weighted > 0 else 0.2
                 staff_allocated = max(1, int(total_staff * proportion))
                 beds_allocated = max(2, int(total_beds * proportion))
-                
                 remaining_staff = max(1, remaining_staff - staff_allocated)
                 remaining_beds = max(2, remaining_beds - beds_allocated)
             
-            # Calculate expected utilization and wait time
-            arrival_rate = forecast_val  # patients per round
-            service_capacity = staff_allocated * service_rate  # patients per round
+            # M/M/c utilization: rho = lambda / (c * mu)
+            service_capacity = staff_allocated * mu
+            utilization = forecast_val / service_capacity if service_capacity > 0 else 1.0
+            utilization = min(utilization, 0.99)  # cap for display
             
-            if service_capacity > 0:
-                utilization = arrival_rate / service_capacity
-            else:
-                utilization = 1.0
-            
-            # M/M/c wait time approximation
-            if utilization < 1.0 and staff_allocated > 0:
-                # Simplified Erlang C formula
+            # M/M/c wait time (Wq): only valid when rho < 1
+            # Wq = rho / (c * mu * (1 - rho))  in hours, convert to minutes
+            if utilization < 1.0:
                 rho = utilization
-                expected_wait = rho / (service_capacity * (1 - rho)) * 15  # minutes
+                Wq_hours = rho / (service_capacity * (1 - rho))
+                expected_wait = Wq_hours * 60  # convert to minutes
+                expected_wait = round(min(expected_wait, 120), 1)  # cap at 2 hrs
             else:
-                expected_wait = 999  # System unstable
+                expected_wait = 120.0
             
-            # Generate reasoning
             reasoning = f"""
-            **{dept.replace('_', ' ').title()} Resource Allocation:**
-            
-            **Forecast Data:**
-            - Expected Arrivals: {forecast_val:.1f} patients
-            - Priority Weight: {demand_info['weight']} (Higher = more critical)
-            - Weighted Demand: {demand_info['weighted_demand']:.1f}
-            
-            **Allocation Decision:**
-            - Staff Allocated: {staff_allocated}
-            - Beds Allocated: {beds_allocated}
-            - Service Capacity: {service_capacity:.2f} patients/round
-            - Expected Utilization: {utilization:.1%}
-            - Expected Wait Time: {expected_wait:.1f} minutes
-            
-            **Queueing Analysis (M/M/c):**
-            With {staff_allocated} staff and arrival rate {forecast_val:.1f},
-            utilization is {utilization:.1%}. Keeping ρ < 85% prevents
-            exponential wait time growth.
-            
-            **Reasoning:**
-            Allocation balances priority (clinical criticality) with demand
-            (forecasted volume). Critical departments receive proportionally
-            more resources to maintain service levels.
+**{dept.replace('_', ' ').title()} Allocation:**
+
+- Expected Arrivals: {forecast_val:.1f} patients/hour
+- Priority Weight: {demand_info['weight']}x (clinical importance)
+- Staff Allocated: {staff_allocated} (service capacity: {service_capacity:.1f} patients/hr)
+- Beds Allocated: {beds_allocated}
+- Utilization (ρ): {utilization:.1%}  →  target < 85%
+- Est. Wait Time: {expected_wait:.1f} minutes (M/M/c formula)
+
+Utilization = arrivals ÷ (staff × service_rate) = {forecast_val:.1f} ÷ {service_capacity:.1f}
             """
             
             recommendations[dept] = {
                 'forecast': forecast_val,
                 'staff_allocated': staff_allocated,
                 'beds_allocated': beds_allocated,
-                'utilization': round(utilization, 2),
-                'expected_wait_minutes': round(expected_wait, 1),
+                'utilization': round(utilization, 4),
+                'expected_wait_minutes': expected_wait,
                 'reasoning': reasoning.strip()
             }
         
-        # Overall system reasoning
         total_utilization = sum([r['utilization'] for r in recommendations.values()]) / len(recommendations)
         
         system_reasoning = f"""
-        **System-Wide Allocation Summary:**
-        
-        **Total Resources:**
-        - Total Staff: {total_staff}
-        - Total Beds: {total_beds}
-        - Average System Utilization: {total_utilization:.1%}
-        
-        **Allocation Strategy:**
-        1. Priority-weighted allocation (Critical Care gets 3x weight)
-        2. M/M/c queue theory ensures ρ < 85% target
-        3. Minimum resources per department (1 staff, 2 beds)
-        
-        **Result:**
-        All departments receive resources proportional to both clinical
-        priority and predicted demand, minimizing system-wide wait times.
+**System-Wide Summary:**
+- Total Staff Deployed: {total_staff}
+- Total Beds Deployed: {total_beds}
+- Average System Utilization: {total_utilization:.1%}
+- Strategy: Priority-weighted allocation (Critical Care 3×, Emergency 2-2.5×)
         """
         
         return {
