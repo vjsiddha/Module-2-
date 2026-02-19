@@ -1,8 +1,3 @@
-"""
-ER Patient Flow Dashboard - Standalone Demo
-Demonstrates all functionality without requiring web server
-"""
-
 import sys
 import time
 from data_generator import ERDataGenerator
@@ -17,7 +12,7 @@ def print_header(text, char="="):
 def print_section(text):
     """Print section header"""
     print(f"\n{'─' * 70}")
-    print(f"📊 {text}")
+    print(f" {text}")
     print(f"{'─' * 70}")
 
 def print_alert(message, severity="INFO"):
@@ -36,7 +31,7 @@ def format_department_name(dept):
 def run_demo():
     """Run complete dashboard demonstration"""
     
-    print_header("🏥 ER PATIENT FLOW COMMAND CENTER", "═")
+    print_header(" ER PATIENT FLOW COMMAND CENTER", "═")
     print("MSE 433 - Healthcare Operations Management | Module 2")
     print("Interactive Predictive Analytics Dashboard Demo\n")
     
@@ -73,7 +68,7 @@ def run_demo():
     current_round = 10
     print_section(f"Step 3: Current Round Analysis (Round {current_round})")
     
-    print("\n🔮 PREDICTIVE FORECASTS:")
+    print("\n PREDICTIVE FORECASTS:")
     forecasts = analytics.forecast_all_departments(current_round)
     
     for dept, forecast in forecasts.items():
@@ -91,7 +86,7 @@ def run_demo():
     alerts = analytics.detect_surge(forecasts, threshold_percentile=75)
     
     if alerts:
-        print(f"⚠️  {len(alerts)} ALERT(S) DETECTED:\n")
+        print(f"  {len(alerts)} ALERT(S) DETECTED:\n")
         for alert in alerts:
             print_alert(alert['message'], alert['severity'])
             print(f"   Forecast: {alert['forecast']:.1f} | Threshold: {alert['threshold']:.1f}")
@@ -201,14 +196,14 @@ def run_demo():
             # Check for alerts
             next_alerts = analytics.detect_surge(next_forecasts)
             if next_alerts:
-                print("\n⚠️  ALERTS FOR NEXT ROUND:")
+                print("\n  ALERTS FOR NEXT ROUND:")
                 for alert in next_alerts:
                     print(f"  {alert['message']}")
         
         time.sleep(0.5)  # Pause for effect
     
     # Final Summary
-    print_header("📊 Dashboard Demo Complete", "═")
+    print_header(" Dashboard Demo Complete", "═")
     print("\nKey Features Demonstrated:")
     print("  ✓ Historical data generation from gameplay patterns")
     print("  ✓ Multi-method ensemble forecasting")
@@ -218,10 +213,10 @@ def run_demo():
     print("  ✓ Real-time simulation capabilities")
     print("  ✓ Statistical benchmarking")
     
-    print("\n📦 Output Files Generated:")
+    print("\n Output Files Generated:")
     print("  • er_historical_data.csv - Historical session data")
     
-    print("\n🌐 To run the full interactive web dashboard:")
+    print("\n To run the full interactive web dashboard:")
     print("  1. Install dependencies: pip install -r requirements.txt")
     print("  2. Run dashboard: python dashboard.py")
     print("  3. Open browser: http://127.0.0.1:8050")
@@ -235,7 +230,7 @@ if __name__ == "__main__":
         print("\n\nDemo interrupted by user.")
         sys.exit(0)
     except Exception as e:
-        print(f"\n\n❌ Error occurred: {str(e)}")
+        print(f"\n\n Error occurred: {str(e)}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
