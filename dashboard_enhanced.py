@@ -1,12 +1,3 @@
-"""
-Enhanced ER Patient Flow Dashboard
-- User-adjustable parameters
-- Game state editing
-- Reasoning-backed recommendations
-- Integrated Poisson forecasting
-- Combined staff + bed allocation
-"""
-
 import dash
 from dash import dcc, html, Input, Output, State, dash_table
 import plotly.graph_objs as go
@@ -63,7 +54,7 @@ game_state = {
 app.layout = html.Div([
     # Header
     html.Div([
-        html.H1("🏥 ER Command Center - Enhanced Decision Support", 
+        html.H1(" ER Command Center - Enhanced Decision Support", 
                 style={'textAlign': 'center', 'color': '#2C3E50', 'marginBottom': '5px'}),
         html.P("Poisson-Based Forecasting | Reasoning-Backed Recommendations | Interactive Controls",
                style={'textAlign': 'center', 'color': '#7F8C8D', 'fontSize': '14px'})
@@ -71,7 +62,7 @@ app.layout = html.Div([
     
     # === PARAMETER CONTROL PANEL ===
     html.Div([
-        html.H3("🎛️ Game Parameters & Controls", style={'color': '#2C3E50', 'marginBottom': '15px'}),
+        html.H3(" Game Parameters & Controls", style={'color': '#2C3E50', 'marginBottom': '15px'}),
         
         html.Div([
             # Hour control
@@ -113,7 +104,7 @@ app.layout = html.Div([
     
     # === EDIT GAME STATE ===
     html.Div([
-        html.H3("✏️ Current Game State", style={'color': '#2C3E50', 'marginBottom': '15px'}),
+        html.H3(" Current Game State", style={'color': '#2C3E50', 'marginBottom': '15px'}),
         html.P("Edit Current Patients and Staff to match your game board. Beds auto-distribute from Total Beds Available above.", 
                style={'fontSize': '12px', 'color': '#7F8C8D', 'marginBottom': '10px'}),
         
@@ -158,7 +149,7 @@ app.layout = html.Div([
     
     # Heat Map - Quick Status View
     html.Div([
-        html.H3("🔥 Department Utilization Heat Map", style={'color': '#2C3E50', 'marginBottom': '15px'}),
+        html.H3(" Department Utilization Heat Map", style={'color': '#2C3E50', 'marginBottom': '15px'}),
         html.P("Real-time capacity utilization across all departments",
                style={'fontSize': '11px', 'color': '#7F8C8D', 'marginBottom': '10px', 'fontStyle': 'italic'}),
         dcc.Graph(id='heatmap-chart')
@@ -167,7 +158,7 @@ app.layout = html.Div([
 
     # === PATIENT TRANSPARENCY (Feature 03 from slides) ===
     html.Div([
-        html.H3("📢 Patient Communication & Transparency", style={'color': '#2C3E50', 'marginBottom': '5px'}),
+        html.H3(" Patient Communication & Transparency", style={'color': '#2C3E50', 'marginBottom': '5px'}),
         html.P("Evidence-based: visible wait times improve perceived fairness even when delays persist (Maister, 1985; McManus et al., 2014)",
                style={'fontSize': '11px', 'color': '#7F8C8D', 'marginBottom': '15px', 'fontStyle': 'italic'}),
         html.Div(id='patient-transparency')
@@ -176,7 +167,7 @@ app.layout = html.Div([
 
     # === POLICY IMPACT ANALYSIS ===
     html.Div([
-        html.H3("📈 Policy Impact Analysis", style={'color': '#2C3E50', 'marginBottom': '5px'}),
+        html.H3(" Policy Impact Analysis", style={'color': '#2C3E50', 'marginBottom': '5px'}),
         html.P("Quantitative comparison: Reactive (baseline) vs. Proactive (dashboard-driven) resource allocation",
                style={'fontSize': '11px', 'color': '#7F8C8D', 'marginBottom': '15px', 'fontStyle': 'italic'}),
         html.Div(id='policy-impact')
@@ -188,7 +179,7 @@ app.layout = html.Div([
         # Left: Forecast
         html.Div([
             html.Div([
-                html.H3("🔮 Poisson Distribution Forecast", style={'color': '#2C3E50', 'marginBottom': '15px'}),
+                html.H3(" Poisson Distribution Forecast", style={'color': '#2C3E50', 'marginBottom': '15px'}),
                 html.P("Next 4 hours prediction based on fitted Poisson models (theoretically correct for count data)",
                       style={'fontSize': '11px', 'color': '#7F8C8D', 'marginBottom': '10px', 'fontStyle': 'italic'}),
                 dcc.Graph(id='forecast-chart')
@@ -197,7 +188,7 @@ app.layout = html.Div([
             
             # Forecast Details with Reasoning
             html.Div([
-                html.H3("📊 Forecast Details & Statistical Reasoning", style={'color': '#2C3E50', 'marginBottom': '15px'}),
+                html.H3(" Forecast Details & Statistical Reasoning", style={'color': '#2C3E50', 'marginBottom': '15px'}),
                 html.Div(id='forecast-reasoning')
             ], style={'backgroundColor': 'white', 'padding': '20px',
                      'borderRadius': '10px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
@@ -206,7 +197,7 @@ app.layout = html.Div([
         # Right: Recommendations
         html.Div([
             html.Div([
-                html.H3("💡 Optimized Resource Allocation", style={'color': '#2C3E50', 'marginBottom': '15px'}),
+                html.H3(" Optimized Resource Allocation", style={'color': '#2C3E50', 'marginBottom': '15px'}),
                 html.P("Staff + Bed allocation based on M/M/c queueing theory & priority weighting",
                       style={'fontSize': '11px', 'color': '#7F8C8D', 'marginBottom': '10px', 'fontStyle': 'italic'}),
                 html.Div(id='resource-recommendations')
@@ -215,7 +206,7 @@ app.layout = html.Div([
             
             # Allocation Reasoning
             html.Div([
-                html.H3("📝 Allocation Reasoning", style={'color': '#2C3E50', 'marginBottom': '15px'}),
+                html.H3(" Allocation Reasoning", style={'color': '#2C3E50', 'marginBottom': '15px'}),
                 html.Div(id='allocation-reasoning')
             ], style={'backgroundColor': 'white', 'padding': '20px',
                      'borderRadius': '10px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
@@ -512,22 +503,22 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                 html.Div([
                     html.Div([
                         html.Div([
-                            html.Div("🏥 Currently Here", style={'fontSize':'11px','color':'#7F8C8D','marginBottom':'2px'}),
+                            html.Div(" Currently Here", style={'fontSize':'11px','color':'#7F8C8D','marginBottom':'2px'}),
                             html.Div(f"{current_pts}", style={'fontSize':'22px','fontWeight':'bold','color':'#E74C3C' if current_pts > 5 else '#2C3E50'}),
                             html.Div("in dept now", style={'fontSize':'10px','color':'#BDC3C7'})
                         ], style={'flex':'1','textAlign':'center','backgroundColor':'white','padding':'12px','borderRadius':'8px','margin':'4px'}),
                         html.Div([
-                            html.Div("🎲 Incoming (λ)", style={'fontSize':'11px','color':'#7F8C8D','marginBottom':'2px'}),
+                            html.Div(" Incoming (λ)", style={'fontSize':'11px','color':'#7F8C8D','marginBottom':'2px'}),
                             html.Div(f"{new_arrivals:.1f}", style={'fontSize':'22px','fontWeight':'bold','color':color}),
                             html.Div("Poisson forecast", style={'fontSize':'10px','color':'#BDC3C7'})
                         ], style={'flex':'1','textAlign':'center','backgroundColor':'white','padding':'12px','borderRadius':'8px','margin':'4px'}),
                         html.Div([
-                            html.Div("📊 Total Demand", style={'fontSize':'11px','color':'#7F8C8D','marginBottom':'2px'}),
+                            html.Div(" Total Demand", style={'fontSize':'11px','color':'#7F8C8D','marginBottom':'2px'}),
                             html.Div(f"{total_demand:.1f}", style={'fontSize':'22px','fontWeight':'bold','color':'#2C3E50'}),
                             html.Div("staff must handle", style={'fontSize':'10px','color':'#BDC3C7'})
                         ], style={'flex':'1','textAlign':'center','backgroundColor':'white','padding':'12px','borderRadius':'8px','margin':'4px'}),
                         html.Div([
-                            html.Div("📊 95% CI", style={'fontSize':'11px','color':'#7F8C8D','marginBottom':'2px'}),
+                            html.Div(" 95% CI", style={'fontSize':'11px','color':'#7F8C8D','marginBottom':'2px'}),
                             html.Div(f"{lower:.0f} – {upper:.0f}", style={'fontSize':'18px','fontWeight':'bold','color':'#8E44AD'}),
                             html.Div("arrival range", style={'fontSize':'10px','color':'#BDC3C7'})
                         ], style={'flex':'1','textAlign':'center','backgroundColor':'white','padding':'12px','borderRadius':'8px','margin':'4px'}),
@@ -560,19 +551,19 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                 # Key numbers row
                 html.Div([
                     html.Div([
-                        html.Span("👥 ", style={'fontSize':'16px'}),
+                        html.Span(" ", style={'fontSize':'16px'}),
                         html.Span(f"{alloc['staff_allocated']}",
                                   style={'fontSize':'24px','fontWeight':'bold','color':'#3498DB'}),
                         html.Div("staff", style={'fontSize':'11px','color':'#7F8C8D'})
                     ], style={'textAlign':'center','flex':'1'}),
                     html.Div([
-                        html.Span("🛏️ ", style={'fontSize':'16px'}),
+                        html.Span(" ", style={'fontSize':'16px'}),
                         html.Span(f"{alloc['beds_allocated']}",
                                   style={'fontSize':'24px','fontWeight':'bold','color':'#2ECC71'}),
                         html.Div("beds", style={'fontSize':'11px','color':'#7F8C8D'})
                     ], style={'textAlign':'center','flex':'1'}),
                     html.Div([
-                        html.Span(f"⏱️ ", style={'fontSize':'16px'}),
+                        html.Span(f" ", style={'fontSize':'16px'}),
                         html.Span(f"{wait:.0f}m",
                                   style={'fontSize':'24px','fontWeight':'bold','color':wait_color}),
                         html.Div("est. wait", style={'fontSize':'11px','color':'#7F8C8D'})
@@ -683,7 +674,7 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                     html.Span("  🟢 Status visible to patients",
                               style={'fontSize':'12px','color':'#27AE60','marginLeft':'12px'}),
                 ]),
-                html.Div(f"📱 SMS: 'Your estimated wait is {wait_min} min. You may wait in café area. We'll text when ready.'",
+                html.Div(f" SMS: 'Your estimated wait is {wait_min} min. You may wait in café area. We'll text when ready.'",
                          style={'fontSize':'11px','color':'#3498DB','marginTop':'5px',
                                 'fontStyle':'italic'}) if sms else html.Div()
             ], style={'padding':'12px','borderLeft':f'4px solid {DEPT_COLORS[dept]}',
@@ -691,7 +682,7 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         )
     transparency_components = html.Div([
         html.Div(transparency_cards),
-        html.Div("🔬 Transparency Benefits: Research shows visible wait times & provider availability improve patient satisfaction even when delays persist (McManus et al., 2014)",
+        html.Div(" Transparency Benefits: Research shows visible wait times & provider availability improve patient satisfaction even when delays persist (McManus et al., 2014)",
                  style={'backgroundColor':'#E8F8F5','border':'1px solid #27AE60','borderRadius':'6px',
                         'padding':'10px','fontSize':'12px','color':'#1E8449','marginTop':'10px'})
     ])
@@ -867,7 +858,7 @@ if __name__ == '__main__':
     # Only print analysis once (skip on Flask reloader restart)
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         print("\n" + "="*70)
-        print("🏥 ENHANCED ER COMMAND CENTER")
+        print(" ENHANCED ER COMMAND CENTER")
         print("="*70)
         print("\nNew Features:")
         print("  ✓ Adjustable parameters (staff, beds, round)")
@@ -883,7 +874,7 @@ if __name__ == '__main__':
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         # === FINANCIAL SENSITIVITY ANALYSIS (FOR REPORT) ===
         print("\n" + "="*70)
-        print("💰 FINANCIAL SENSITIVITY ANALYSIS")
+        print(" FINANCIAL SENSITIVITY ANALYSIS")
         print("="*70)
         print("(This analysis validates ROI claims for the report)")
         print()
@@ -939,9 +930,9 @@ if __name__ == '__main__':
     print()
     
     print("KEY METRICS:")
-    print(f"  📅 Daily Savings:   ${daily_savings:,.0f}")
-    print(f"  📅 Annual Savings:  ${annual_savings:,.0f}")
-    print(f"  📊 ROI:             {roi_percent:.1f}%")
+    print(f"   Daily Savings:   ${daily_savings:,.0f}")
+    print(f"   Annual Savings:  ${annual_savings:,.0f}")
+    print(f"   ROI:             {roi_percent:.1f}%")
     print(f"  ⏱ Wait Reduction:   {reactive_avg_wait:.0f} min → {proactive_avg_wait:.0f} min")
     print()
     
