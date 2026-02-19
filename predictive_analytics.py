@@ -1,21 +1,9 @@
-"""
-Healthcare ER Patient Flow - Enhanced Predictive Analytics
-Uses Poisson distribution fitting for stochastic arrival modeling
-Provides reasoning-backed recommendations
-"""
-
 import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.optimize import minimize
 
 class ERPredictiveAnalytics:
-    """
-    Enhanced predictive analytics with:
-    - Poisson distribution fitting (better for count data)
-    - Reasoning-backed recommendations
-    - Statistical rigor and validation
-    """
     
     def __init__(self, historical_data):
         """
