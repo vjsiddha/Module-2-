@@ -1,4 +1,4 @@
-# 🏥 ER Patient Flow Command Center Dashboard
+# ER Patient Flow Command Center Dashboard
 
 **MSE 433 - Healthcare Operations Management | Module 2**
 
@@ -6,7 +6,7 @@ An interactive predictive analytics dashboard for Emergency Room patient flow op
 
 ---
 
-## 📋 Overview
+## Overview
 
 This dashboard provides real-time monitoring and predictive analytics for ER patient flow across five departments:
 - **Emergency Walk-in**
@@ -17,7 +17,7 @@ This dashboard provides real-time monitoring and predictive analytics for ER pat
 
 ---
 
-## 🎯 Key Features
+##  Key Features
 
 ### 1. **Real-Time Monitoring**
 - Live patient count by department
@@ -45,7 +45,7 @@ This dashboard provides real-time monitoring and predictive analytics for ER pat
 
 ---
 
-## 🚀 Installation & Setup
+##  Installation & Setup
 
 ### Prerequisites
 - Python 3.8 or higher
@@ -69,7 +69,7 @@ http://127.0.0.1:8050
 
 ---
 
-## 📊 Data Generation
+## Data Generation
 
 The system uses actual gameplay data as the baseline and generates additional mock sessions for robust predictive modeling.
 
@@ -90,7 +90,7 @@ The `data_generator.py` module creates 4 additional sessions with:
 
 ---
 
-## 🔮 Predictive Analytics Methods
+##  Predictive Analytics Methods
 
 ### Ensemble Forecasting
 Combines three methods with weighted averaging:
@@ -115,7 +115,7 @@ Combines three methods with weighted averaging:
 
 ---
 
-## 🎮 How to Use the Dashboard
+##  How to Use the Dashboard
 
 ### Control Panel
 - **Current Round Input**: Manually set the current round (1-23)
@@ -157,7 +157,7 @@ Combines three methods with weighted averaging:
 
 ---
 
-## 📁 File Structure
+##  File Structure
 
 ```
 er-dashboard/
@@ -174,7 +174,7 @@ er-dashboard/
 
 ---
 
-## 🛠️ Customization
+##  Customization
 
 ### Adjust Capacity Settings
 Edit `CAPACITY_CONFIG` in `dashboard.py`:
@@ -203,7 +203,7 @@ alerts = analytics.detect_surge(forecasts, threshold_percentile=75)  # Lower = m
 
 ---
 
-## 📈 Validation for Gameplay 2
+##  Validation for Gameplay 
 
 ### Recommended Testing Protocol
 
@@ -232,45 +232,7 @@ alerts = analytics.detect_surge(forecasts, threshold_percentile=75)  # Lower = m
 
 ---
 
-## 🎓 Integration with MGTE Courses
-
-This dashboard demonstrates concepts from:
-
-- **MSE 202 (Probability & Statistics)**: Forecasting, confidence intervals
-- **MSE 212 (Simulation)**: Discrete-event simulation principles
-- **MSE 335 (Supply Chain)**: Demand forecasting, capacity planning
-- **MSE 401 (Systems Optimization)**: Resource allocation
-- **MSE 411 (Service Systems)**: Queue management, service design
-- **MSE 432 (Analytics)**: Predictive modeling, decision support systems
-
----
-
-## 🐛 Troubleshooting
-
-### Dashboard won't start
-```bash
-# Check if port 8050 is already in use
-lsof -i :8050  # On Mac/Linux
-netstat -ano | findstr :8050  # On Windows
-
-# Use different port
-# Edit dashboard.py: app.run_server(port=8051)
-```
-
-### Import errors
-```bash
-# Reinstall dependencies
-pip install --upgrade -r requirements.txt
-```
-
-### No data showing
-- Ensure `data_generator.py` ran successfully
-- Check console for error messages
-- Verify historical_data is being generated
-
----
-
-## 📝 Future Enhancements
+##  Future Enhancements
 
 Potential additions for deeper analysis:
 - Patient acuity-weighted forecasting
@@ -280,26 +242,7 @@ Potential additions for deeper analysis:
 - Monte Carlo simulation for uncertainty analysis
 - Machine learning models (LSTM, Prophet) for complex patterns
 
----
 
-## 👥 Team Members
-
-[Add your team member names here]
-
----
-
-## 📧 Support
-
-For questions or issues:
-1. Check the Troubleshooting section
-2. Review console error messages
-3. Contact course TAs/instructor
-
----
-
-## 📄 License
-
-This project is for educational purposes as part of MSE 433 coursework.
 
 ---
 
