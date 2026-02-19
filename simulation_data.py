@@ -1,18 +1,9 @@
-"""
-Healthcare ER Patient Flow - Discrete Event Simulation
-Based on operational parameters and causal relationships
-"""
-
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 
 
 class ERSimulationModel:
-    """
-    Discrete Event Simulation for ER patient flow
-    Based on operational parameters, not just statistical fitting
-    """
     
     def __init__(self):
         # Model PARAMETERS (from game mechanics)
