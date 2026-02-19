@@ -1,22 +1,7 @@
-"""
-Healthcare ER Patient Flow - Enhanced Data Generator
-Generates data using Poisson distribution (theoretically correct for count data)
-Includes patient discharge/treatment simulation
-Exports historical data for dashboard use
-"""
-
 import numpy as np
 import pandas as pd
 
 class ERDataGenerator:
-    """
-    Generate realistic ER patient arrival data using Poisson distribution
-    
-    Poisson is theoretically correct for:
-    - Discrete count data (# of patients)
-    - Independent arrivals
-    - Constant average rate per period
-    """
     
     def __init__(self):
         # Actual gameplay data (23 rounds) - serves as validation
@@ -209,7 +194,7 @@ if __name__ == "__main__":
     generator = ERDataGenerator()
     
     # Show fitted parameters
-    print("\n📊 Fitted Poisson Parameters (λ):")
+    print("\n Fitted Poisson Parameters (λ):")
     print("-" * 70)
     for dept, params in generator.poisson_params.items():
         print(f"\n{dept.replace('_', ' ').title()}:")
@@ -218,25 +203,25 @@ if __name__ == "__main__":
         print(f"  Late Game (Rounds 17-23):  λ = {params['late_lambda']:.2f}")
     
     # Generate 5 sessions (1 actual + 4 Poisson-generated)
-    print("\n\n📦 Generating Historical Data...")
+    print("\n\n Generating Historical Data...")
     historical_data = generator.generate_multiple_sessions(num_sessions=5)
     
     print(f"\n✓ Generated {len(historical_data)} records")
     print(f"✓ Sessions: {list(historical_data['session_id'].unique())}")
     
-    print("\n📋 Sample Data (First 10 rows):")
+    print("\n Sample Data (First 10 rows):")
     print(historical_data.head(10).to_string(index=False))
     
-    print("\n📊 Statistical Summary:")
+    print("\n Statistical Summary:")
     print(historical_data[['emergency_walkin', 'emergency_ambulance', 'surgery', 
                           'critical_care', 'step_down']].describe().round(2))
     
     # Export
-    print("\n\n💾 Exporting Data...")
+    print("\n\n Exporting Data...")
     generator.export_to_csv(historical_data, 'er_historical_data.csv')
     
     # Test discharge simulation
-    print("\n\n🏥 Testing Patient Discharge Simulation:")
+    print("\n\n Testing Patient Discharge Simulation:")
     print("-" * 70)
     test_patients = {'emergency_walkin': 10, 'surgery': 5, 'step_down': 8}
     print("\nInitial Patients:")
