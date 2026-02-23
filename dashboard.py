@@ -1,13 +1,3 @@
-"""
-Enhanced ER Patient Flow Dashboard with On-Call Staff Management
-- User-adjustable parameters
-- Game state editing
-- Reasoning-backed recommendations
-- Integrated Poisson forecasting
-- Combined staff + bed allocation
-- ON-CALL STAFF MANAGEMENT
-"""
-
 import dash
 from dash import dcc, html, Input, Output, State, dash_table
 import plotly.graph_objs as go
