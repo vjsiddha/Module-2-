@@ -1,15 +1,10 @@
-"""
-COMPREHENSIVE VALIDATION: Game-Based Cost Structure
-Uses actual penalty costs from "Friday Night at the ER" game
-"""
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 import seaborn as sns
 
-# Import your analytics
+# Import  analytics
 try:
     from predictive_analytics_enhanced import ERPredictiveAnalytics
 except ImportError:
@@ -18,7 +13,7 @@ except ImportError:
 from data_generator import ERDataGenerator
 
 # ============================================================================
-# GAME COST STRUCTURE (from your notes)
+# GAME COST STRUCTURE (from  notes)
 # ============================================================================
 
 GAME_COSTS = {

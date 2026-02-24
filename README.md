@@ -66,6 +66,10 @@ Open your web browser and navigate to:
 ```
 http://127.0.0.1:8050
 ```
+### Step 4: Run the Validation methods 
+```bash
+python validation_dashboard.py 
+```
 
 ---
 
@@ -244,8 +248,4 @@ Potential additions for deeper analysis:
 
 
 
----
 
-**Last Updated**: February 2026
-**Course**: MSE 433 - Applications of Management Engineering
-**Module**: Healthcare Operations - Friday Night in the ER

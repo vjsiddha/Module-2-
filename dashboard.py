@@ -906,23 +906,6 @@ if __name__ == '__main__':
     
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         print("\n" + "="*70)
-        print("🏥 ENHANCED ER COMMAND CENTER WITH ON-CALL MANAGEMENT")
-        print("="*70)
-        print("\nFeatures:")
-        print("  ✓ Adjustable parameters (staff, beds, hour)")
-        print("  ✓ Edit game state (set current patients)")
-        print("  ✓ Poisson distribution forecasting")
-        print("  ✓ Reasoning-backed recommendations")
-        print("  ✓ Combined staff + bed allocation")
-        print("  ✓ M/M/c queue theory integration")
-        print("  ✓ ON-CALL STAFF MANAGEMENT (NEW!)")
-        print("    - 12 base staff + 20 on-call pool")
-        print("    - 60-minute response time")
-        print("    - 0.8x overtime rate ($40/hr)")
-        print("    - Automatic surge detection (>85% utilization)")
-        print("    - Manual call controls")
-        print("\nDashboard: http://127.0.0.1:8050")
-        print("="*70 + "\n")
     
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         print("\n" + "="*70)
@@ -1007,14 +990,4 @@ if __name__ == '__main__':
             
             print(f"{scenario_name:30} ${sc_reactive:>11,.0f} ${sc_proactive:>11,.0f} ${sc_savings:>11,.0f} ${sc_roi:>7.1f}%")
         
-        print()
-        print("KEY FINDINGS:")
-        print("  ✓ Dashboard ROI remains positive (15-28%) across ALL scenarios")
-        print("  ✓ Financial benefit is robust to parameter uncertainty")
-        print("  ✓ Primary savings driver: Wait time reduction (60 min → 8 min)")
-        print("  ✓ No additional staffing/beds required - pure optimization gain")
-        print()
-        print("="*70)
-        print()
-
     app.run(debug=True, host='127.0.0.1', port=8050)
