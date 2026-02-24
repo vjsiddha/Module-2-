@@ -64,19 +64,12 @@ game_state = {
 
 # Helper function for surge detection
 def detect_surge_and_recommend_oncall(allocation_result, oncall_available):
-    """
-    Detect if on-call staff should be called based on utilization
-    
-    Returns:
-        dict with recommendation info
-    """
     critical_depts = []
     extra_staff_needed = 0
     
     for dept, alloc in allocation_result['allocations'].items():
         util = alloc['utilization']
         
-        # Trigger conditions - only check utilization, ignore wait time
         if util >= ONCALL_CONFIG['call_threshold']:
             critical_depts.append({
                 'name': DEPT_NAMES[dept],
@@ -84,7 +77,6 @@ def detect_surge_and_recommend_oncall(allocation_result, oncall_available):
                 'current_staff': alloc['staff_allocated']
             })
             
-            # Calculate extra staff needed to bring utilization to 75%
             target_util = 0.75
             forecast = alloc['forecast']
             service_rate = 2.0
@@ -94,7 +86,6 @@ def detect_surge_and_recommend_oncall(allocation_result, oncall_available):
             extra = max(0, required_staff - alloc['staff_allocated'])
             extra_staff_needed += extra
     
-    # Cap at available pool
     extra_staff_needed = min(extra_staff_needed, oncall_available)
     
     return {
@@ -119,21 +110,18 @@ app.layout = html.Div([
         html.H3("🎛️ Game Parameters & Controls", style={'color': '#2C3E50', 'marginBottom': '15px'}),
         
         html.Div([
-            # Hour control
             html.Div([
                 html.Label("Current Hour:", style={'fontWeight': 'bold'}),
                 dcc.Input(id='current-hour', type='number', value=1, min=1, max=24,
                          style={'width': '70px', 'marginLeft': '10px'}),
             ], style={'display': 'inline-block', 'marginRight': '30px'}),
             
-            # Total staff control
             html.Div([
                 html.Label("Total Staff Available:", style={'fontWeight': 'bold'}),
                 dcc.Input(id='total-staff', type='number', value=12, min=5, max=40,
                          style={'width': '70px', 'marginLeft': '10px'}),
             ], style={'display': 'inline-block', 'marginRight': '30px'}),
             
-            # Total beds control
             html.Div([
                 html.Label("Total Beds Available:", style={'fontWeight': 'bold'}),
                 dcc.Input(id='total-beds', type='number', value=51, min=20, max=100,
@@ -201,7 +189,7 @@ app.layout = html.Div([
     # Alerts
     html.Div(id='alert-panel', style={'marginBottom': '15px'}),
     
-    # === ROW 1: HEAT MAP + POISSON FORECAST (SIDE BY SIDE) ===
+    # === ROW 1: HEAT MAP + POISSON FORECAST (SIDE BY SIDE) — FIXED WITH FLEXBOX ===
     html.Div([
         # Left: Heat Map
         html.Div([
@@ -209,9 +197,14 @@ app.layout = html.Div([
             html.P("Real-time capacity utilization across all departments",
                    style={'fontSize': '11px', 'color': '#7F8C8D', 'marginBottom': '10px', 'fontStyle': 'italic'}),
             dcc.Graph(id='heatmap-chart', style={'height': '250px'})
-        ], style={'backgroundColor': 'white', 'padding': '20px',
-                 'borderRadius': '10px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-                 'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+        ], style={
+            'backgroundColor': 'white',
+            'padding': '20px',
+            'borderRadius': '10px',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'flex': '1',          # ← flex instead of width/inline-block
+            'minWidth': '0'       # ← prevents flex children from overflowing
+        }),
         
         # Right: Poisson Forecast
         html.Div([
@@ -219,16 +212,26 @@ app.layout = html.Div([
             html.P("Next 4 hours prediction based on fitted Poisson models",
                    style={'fontSize': '11px', 'color': '#7F8C8D', 'marginBottom': '10px', 'fontStyle': 'italic'}),
             dcc.Graph(id='forecast-chart', style={'height': '250px'})
-        ], style={'backgroundColor': 'white', 'padding': '20px',
-                 'borderRadius': '10px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-                 'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '4%'})
-    ], style={'marginBottom': '15px', 'width': '100%'}),
+        ], style={
+            'backgroundColor': 'white',
+            'padding': '20px',
+            'borderRadius': '10px',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'flex': '1',          # ← flex instead of width/inline-block
+            'minWidth': '0',      # ← prevents flex children from overflowing
+            'marginLeft': '15px'
+        })
+    ], style={
+        'display': 'flex',        # ← KEY: flexbox row
+        'flexDirection': 'row',
+        'alignItems': 'stretch',
+        'marginBottom': '15px'
+    }),
 
     # === ROW 2: ON-CALL STAFF MANAGEMENT (FULL WIDTH) ===
     html.Div([
         html.H3("📞 On-Call Staff Management", style={'color': '#2C3E50', 'marginBottom': '15px'}),
         
-        # Status display
         html.Div([
             html.Div([
                 html.Div("Available On-Call", style={'fontSize': '11px', 'color': '#7F8C8D'}),
@@ -260,10 +263,8 @@ app.layout = html.Div([
         ], style={'display': 'flex', 'backgroundColor': '#F8F9FA', 'borderRadius': '8px',
                  'marginBottom': '15px'}),
         
-        # Surge detection recommendation
         html.Div(id='oncall-recommendation', style={'marginBottom': '10px'}),
         
-        # Manual call controls
         html.Div([
             html.Label("Call Additional Staff:", style={'fontWeight': 'bold', 'marginRight': '10px'}),
             dcc.Input(id='staff-to-call', type='number', value=0, min=0, max=20,
@@ -290,24 +291,40 @@ app.layout = html.Div([
     ], style={'backgroundColor': 'white', 'padding': '20px', 'marginBottom': '15px',
              'borderRadius': '10px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
     
-    # === MAIN DASHBOARD: FORECAST DETAILS & ALLOCATION REASONING (SIDE BY SIDE) ===
+    # === MAIN DASHBOARD: FORECAST DETAILS & ALLOCATION REASONING (SIDE BY SIDE) — FIXED WITH FLEXBOX ===
     html.Div([
         # Left: Forecast Details
         html.Div([
             html.H3("📊 Forecast Details & Statistical Reasoning", style={'color': '#2C3E50', 'marginBottom': '15px'}),
             html.Div(id='forecast-reasoning')
-        ], style={'backgroundColor': 'white', 'padding': '20px',
-                 'borderRadius': '10px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-                 'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+        ], style={
+            'backgroundColor': 'white',
+            'padding': '20px',
+            'borderRadius': '10px',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'flex': '1',          # ← flex instead of width/inline-block
+            'minWidth': '0'       # ← prevents overflow
+        }),
         
         # Right: Allocation Reasoning
         html.Div([
             html.H3("📝 Allocation Reasoning", style={'color': '#2C3E50', 'marginBottom': '15px'}),
             html.Div(id='allocation-reasoning')
-        ], style={'backgroundColor': 'white', 'padding': '20px',
-                 'borderRadius': '10px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-                 'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '4%'})
-    ], style={'marginBottom': '15px'}),
+        ], style={
+            'backgroundColor': 'white',
+            'padding': '20px',
+            'borderRadius': '10px',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'flex': '1',          # ← flex instead of width/inline-block
+            'minWidth': '0',      # ← prevents overflow
+            'marginLeft': '15px'
+        })
+    ], style={
+        'display': 'flex',        # ← KEY: flexbox row
+        'flexDirection': 'row',
+        'alignItems': 'stretch',
+        'marginBottom': '15px'
+    }),
     
     # === RESOURCE RECOMMENDATIONS (FULL WIDTH) ===
     html.Div([
@@ -321,7 +338,7 @@ app.layout = html.Div([
 ], style={'padding': '20px', 'backgroundColor': '#F5F6FA', 'fontFamily': 'Arial, sans-serif'})
 
 
-# Main callback - POLICY IMPACT REMOVED FROM OUTPUTS
+# Main callback
 @app.callback(
     [Output('parameter-status', 'children'),
      Output('game-state-table', 'data'),
@@ -355,39 +372,33 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                     staff_to_call):
     """Main dashboard update with parameter controls and on-call management"""
     
-    # Determine trigger
     ctx = dash.callback_context
     if not ctx.triggered:
         button_id = 'update-btn'
     else:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
-    # Update game state
     game_state['current_hour'] = current_hour
     game_state['total_staff'] = total_staff
     game_state['total_beds'] = total_beds
     
-    # Handle on-call staff management
     oncall_status_msg = ""
     
     if button_id == 'call-staff-btn' and staff_to_call and staff_to_call > 0:
-        # Check availability
         can_call = min(staff_to_call, game_state['oncall_available'])
         
         if can_call > 0:
-            # Call staff
             game_state['oncall_called'] += can_call
             game_state['oncall_available'] -= can_call
-            game_state['total_staff'] += can_call  # Add to total pool
+            game_state['total_staff'] += can_call
             
-            # Record call
             game_state['call_history'].append({
                 'hour': current_hour,
                 'staff_called': can_call,
                 'reason': 'Manual call'
             })
             
-            total_staff = game_state['total_staff']  # Update for allocation
+            total_staff = game_state['total_staff']
             
             cost = can_call * ONCALL_CONFIG['base_hourly_rate'] * ONCALL_CONFIG['overtime_rate']
             oncall_status_msg = f"✓ Called {can_call} staff! Arriving in {ONCALL_CONFIG['response_time']} min. Overtime cost: ${cost:.0f}/hr"
@@ -395,7 +406,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
             oncall_status_msg = "❌ No on-call staff available!"
     
     elif button_id == 'release-staff-btn':
-        # Release all called staff
         if game_state['oncall_called'] > 0:
             released = game_state['oncall_called']
             game_state['oncall_available'] += released
@@ -408,7 +418,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         else:
             oncall_status_msg = "No on-call staff to release."
     
-    # Handle state saving
     save_status = ""
     if button_id == 'save-state-btn' and state_data:
         if 'staff_per_dept' not in game_state:
@@ -420,29 +429,19 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                 game_state['staff_per_dept'][dept_key] = int(row.get('staff', 1))
         save_status = "✓ Game state saved!"
     
-    # Simulate next hour if requested
     if button_id == 'simulate-btn':
-        # Generate new arrivals using Poisson distribution
         new_arrivals = generator.generate_real_time_data(current_hour, historical_data)
         
-        # Process each department: discharge some patients, add new arrivals
         for dept in DEPT_NAMES.keys():
-            # 1. Discharge/treat current patients
             current = game_state['current_patients'][dept]
             remaining_after_treatment = generator.simulate_patient_discharge(current, dept)
-            
-            # 2. Add new arrivals
             game_state['current_patients'][dept] = remaining_after_treatment + new_arrivals[dept]
-            
-            # Track total treated
             treated = current - remaining_after_treatment
             game_state['total_treated'] += treated
         
-        # Advance hour
         current_hour = min(24, current_hour + 1)
         game_state['current_hour'] = current_hour
     
-    # Parameter status
     param_status = html.Span([
         f"✓ Hour {current_hour}/24 | ",
         f"Staff: {total_staff} (Base: {total_staff - game_state['oncall_called']}, On-Call: {game_state['oncall_called']}) | ",
@@ -450,7 +449,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         f"System configured"
     ])
     
-    # Game state table — distribute beds across depts proportionally
     dept_bed_caps = {
         'emergency_walkin': 15, 'emergency_ambulance': 10,
         'surgery': 8, 'critical_care': 6, 'step_down': 12
@@ -484,16 +482,12 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
             'utilization_pct': util_pct
         })
     
-    # Get base forecasts (incoming arrivals this hour)
     forecasts = analytics.forecast_all_departments(current_hour)
     
-    # Blend current patients into effective demand:
-    # effective_demand = current patients already present + forecasted new arrivals
     effective_forecasts = {}
     for dept, fc in forecasts.items():
         current_pts = game_state['current_patients'][dept]
         effective_demand = current_pts + fc['forecast']
-        # Keep same structure but update the forecast value
         effective_forecasts[dept] = {
             **fc,
             'forecast': round(effective_demand, 1),
@@ -505,23 +499,17 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
             }
         }
     
-    # Alerts and allocation use effective demand (current + incoming)
     alerts = analytics.detect_surge(effective_forecasts)
     
-    # Heatmap — use FORECASTED demand utilization (effective_demand / beds) to match alerts
     heatmap_data = []
     heatmap_depts = []
     for dept, dept_name in DEPT_NAMES.items():
-        # Get effective demand (current + incoming)
         effective_demand = effective_forecasts[dept]['forecast']
-        # Get dept beds
         dept_beds = next((r['total_beds'] for r in state_table_data if r['department'] == dept_name), 10)
-        # Forecasted utilization = what % of beds will be needed
         forecast_util = (effective_demand / dept_beds * 100) if dept_beds > 0 else 0
-        heatmap_data.append(min(forecast_util, 100))  # cap at 100%
+        heatmap_data.append(min(forecast_util, 100))
         heatmap_depts.append(dept_name)
     
-    # Alert panel — compact chips, collapse for detail
     alert_components = []
     if alerts:
         for alert in alerts:
@@ -530,14 +518,12 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
             border = '#E74C3C' if is_high else '#F39C12'
             icon = '🔴' if is_high else '🟡'
             
-            # Calculate % above avg using NEW ARRIVALS only (not total demand)
             dept_key = alert['department']
             new_arrivals = effective_forecasts[dept_key].get('new_arrivals', alert['forecast'])
             mean_val = analytics.historical_data[dept_key].mean()
             pct = int(((new_arrivals / mean_val) - 1) * 100) if mean_val > 0 else 0
 
             alert_components.append(html.Div([
-                # One-line summary always visible
                 html.Div([
                     html.Span(f"{icon} {alert['severity']}  ",
                               style={'fontWeight':'bold','fontSize':'14px','color':border}),
@@ -545,7 +531,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                               style={'fontWeight':'bold','fontSize':'14px','color':'#2C3E50'}),
                     html.Span(f"  {alert['forecast']:.1f} expected",
                               style={'fontSize':'14px','color':'#2C3E50'}),
-                    # Inline stat chips
                     html.Span(f"  +{pct}% above avg",
                               style={'backgroundColor':border,'color':'white','borderRadius':'12px',
                                      'padding':'2px 8px','fontSize':'12px','marginLeft':'10px'}),
@@ -563,23 +548,19 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                             'padding':'12px 16px','fontWeight':'bold','color':'#1E8449','fontSize':'15px'})
         )
     
-    # Resource allocation uses effective demand (current + incoming)
     allocation_result = analytics.optimize_resource_allocation(
         effective_forecasts, total_staff, total_beds
     )
     
-    # Detect surge and recommend on-call
     oncall_recommendation = detect_surge_and_recommend_oncall(
         allocation_result, 
         game_state['oncall_available']
     )
     
-    # Build recommendation UI
     if oncall_recommendation['should_call'] and game_state['oncall_available'] > 0:
         rec_staff = oncall_recommendation['recommended_staff']
         cost_estimate = rec_staff * ONCALL_CONFIG['base_hourly_rate'] * ONCALL_CONFIG['overtime_rate']
         
-        # Build critical dept list
         dept_chips = []
         for dept_info in oncall_recommendation['critical_departments']:
             dept_chips.append(
@@ -621,7 +602,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                  'borderRadius': '8px', 'padding': '15px'})
         
     elif game_state['oncall_called'] > 0:
-        # Show active on-call status
         active_cost = game_state['oncall_called'] * ONCALL_CONFIG['base_hourly_rate'] * ONCALL_CONFIG['overtime_rate']
         oncall_rec_component = html.Div([
             html.Span(f"✓ {game_state['oncall_called']} on-call staff currently working",
@@ -631,7 +611,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         ], style={'backgroundColor': '#EAFAF1', 'border': '1px solid #27AE60',
                  'borderRadius': '8px', 'padding': '12px'})
     else:
-        # Normal operations
         oncall_rec_component = html.Div(
             "✅ System operating normally. On-call staff not required.",
             style={'backgroundColor': '#E8F8F5', 'border': '1px solid #27AE60',
@@ -645,10 +624,10 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         y=['Utilization %'],
         zmin=0, zmax=100,
         colorscale=[
-            [0.0,  '#27AE60'],   # 0%   Green
-            [0.6,  '#F39C12'],   # 60%  Yellow
-            [0.85, '#E74C3C'],   # 85%  Red
-            [1.0,  '#922B21']    # 100% Dark red
+            [0.0,  '#27AE60'],
+            [0.6,  '#F39C12'],
+            [0.85, '#E74C3C'],
+            [1.0,  '#922B21']
         ],
         text=[[f"{val:.0f}%" for val in heatmap_data]],
         texttemplate='%{text}',
@@ -664,7 +643,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         yaxis_title=""
     )
     
-    # Forecast chart (next 4 hours)
     forecast_hours = list(range(current_hour, min(current_hour + 4, 25)))
     future_forecasts = analytics.forecast_next_n_rounds(current_hour, n=len(forecast_hours))
     
@@ -674,7 +652,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         lower_bounds = [future_forecasts[h][dept]['lower_bound'] for h in forecast_hours]
         upper_bounds = [future_forecasts[h][dept]['upper_bound'] for h in forecast_hours]
         
-        # Main line
         forecast_fig.add_trace(go.Scatter(
             x=forecast_hours,
             y=forecast_values,
@@ -684,7 +661,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
             marker=dict(size=8)
         ))
         
-        # Confidence band
         forecast_fig.add_trace(go.Scatter(
             x=forecast_hours + forecast_hours[::-1],
             y=upper_bounds + lower_bounds[::-1],
@@ -705,7 +681,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     
-    # Forecast reasoning — clean stat cards showing current + incoming
     forecast_reasoning_components = []
     for dept, fd in effective_forecasts.items():
         current_pts  = fd.get('current_patients', 0)
@@ -754,7 +729,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                       'backgroundColor':'#FAFAFA','borderRadius':'6px','padding':'4px 8px'})
         )
     
-    # Resource allocation — visual cards with utilization bar
     resource_components = []
     for dept, alloc in allocation_result['allocations'].items():
         util_pct = alloc['utilization'] * 100
@@ -764,7 +738,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
 
         resource_components.append(
             html.Div([
-                # Header row
                 html.Div([
                     html.Span(DEPT_NAMES[dept],
                               style={'fontWeight':'bold','fontSize':'14px','color':'#2C3E50'}),
@@ -772,7 +745,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                               style={'fontSize':'12px','color':'#95A5A6','marginLeft':'8px'})
                 ], style={'marginBottom':'8px'}),
 
-                # Key numbers row
                 html.Div([
                     html.Div([
                         html.Span("👥 ", style={'fontSize':'16px'}),
@@ -794,7 +766,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
                     ], style={'textAlign':'center','flex':'1'}),
                 ], style={'display':'flex','marginBottom':'10px'}),
 
-                # Utilization bar
                 html.Div([
                     html.Div(f"Utilization  {util_pct:.0f}%",
                              style={'fontSize':'11px','color':'#7F8C8D','marginBottom':'3px'}),
@@ -813,11 +784,9 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
             })
         )
     
-    # Allocation reasoning — summary table + optional detail per dept
     avg_util = sum(a['utilization'] for a in allocation_result['allocations'].values()) / 5 * 100
 
     allocation_reasoning_components = [
-        # System summary as stat chips
         html.Div([
             html.Div([
                 html.Div("👥 Total Staff", style={'fontSize':'11px','color':'#7F8C8D'}),
@@ -839,7 +808,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         ], style={'display':'flex','backgroundColor':'#F8F9FA','borderRadius':'8px',
                   'padding':'14px','marginBottom':'14px'}),
 
-        # Compact why-table
         html.Div([
             html.Div([
                 html.Span("Dept", style={'fontWeight':'bold','flex':'2','fontSize':'12px','color':'#7F8C8D'}),
@@ -869,14 +837,12 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
         ], style={'borderRadius':'8px','overflow':'hidden','border':'1px solid #ECF0F1'})
     ]
     
-    # === PATIENT TRANSPARENCY PANEL ===
     service_times = {
         'emergency_walkin': 20, 'emergency_ambulance': 30,
         'surgery': 60, 'critical_care': 45, 'step_down': 15
     }
     transparency_rows = []
     for dept, dept_name in DEPT_NAMES.items():
-        # Read from state_table_data (reflects manual edits) not game_state
         row = next((r for r in state_table_data if r['department'] == dept_name), None)
         if not row:
             continue
@@ -919,7 +885,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
     )
     patient_transparency_content = html.Div(transparency_rows + [transparency_footer])
     
-    # On-call display values
     oncall_available_display = str(game_state['oncall_available'])
     oncall_called_display = str(game_state['oncall_called'])
     overtime_cost_display = f"${ONCALL_CONFIG['base_hourly_rate'] * ONCALL_CONFIG['overtime_rate']:.0f}"
@@ -939,7 +904,6 @@ def update_dashboard(update_clicks, simulate_clicks, save_clicks,
 if __name__ == '__main__':
     import os
     
-    # Only print analysis once (skip on Flask reloader restart)
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         print("\n" + "="*70)
         print("🏥 ENHANCED ER COMMAND CENTER WITH ON-CALL MANAGEMENT")
@@ -960,27 +924,22 @@ if __name__ == '__main__':
         print("\nDashboard: http://127.0.0.1:8050")
         print("="*70 + "\n")
     
-    # Only print analysis once (skip on Flask reloader restart)
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-        # === FINANCIAL SENSITIVITY ANALYSIS (FOR REPORT) ===
         print("\n" + "="*70)
         print(" FINANCIAL SENSITIVITY ANALYSIS")
         print("="*70)
         print("(This analysis validates ROI claims for the report)")
         print()
     
-        # Run analysis with typical hospital parameters
-        staff_wage = 40  # $/hr (Canadian RN average)
-        bed_cost = 500   # $/day
-        wait_penalty = 100  # $/hour of wait (patient satisfaction penalty)
+        staff_wage = 40
+        bed_cost = 500
+        wait_penalty = 100
         total_staff = 12
         total_beds = 51
         
-        # Get forecast data for hour 10 (mid-shift)
         forecasts_sample = analytics.forecast_all_departments(10)
         
-        # REACTIVE (baseline): High utilization, long waits
-        reactive_avg_wait = 60  # minutes
+        reactive_avg_wait = 60
         reactive_patients_per_day = sum([f['forecast'] for f in forecasts_sample.values()]) * 24
         
         reactive_staff_cost = staff_wage * total_staff * 24
@@ -988,7 +947,6 @@ if __name__ == '__main__':
         reactive_wait_penalty = wait_penalty * (reactive_avg_wait / 60) * reactive_patients_per_day
         reactive_total = reactive_staff_cost + reactive_bed_cost + reactive_wait_penalty
         
-        # PROACTIVE (dashboard): Optimized allocation
         allocation_sample = analytics.optimize_resource_allocation(forecasts_sample, total_staff, total_beds)
         proactive_avg_wait = sum([a['expected_wait_minutes'] for a in allocation_sample['allocations'].values()]) / 5
         
@@ -1058,7 +1016,5 @@ if __name__ == '__main__':
         print()
         print("="*70)
         print()
-    
 
-    
     app.run(debug=True, host='127.0.0.1', port=8050)
